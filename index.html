@@ -1,273 +1,120 @@
 <!doctype html>
 <html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Journey Map Volare</title>
-<style>
-  :root{
-    --navy:#0B1E3A;
-    --navy-2:#132B50;
-    --cream:#F7F2E8;
-    --paper:#FFFCF7;
-    --gold:#C89A4A;
-    --gold-2:#E6C98F;
-    --ink:#1C2740;
-    --muted:#6E7480;
-    --line:#E8DDC9;
-    --good:#3A8D6D;
-    --warn:#D79A35;
-    --bad:#B85858;
-    --wow:#325A93;
-    --shadow:0 16px 40px rgba(11,30,58,.10);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI",sans-serif}
-  body{min-height:100vh}
-  button,input,select,textarea{font:inherit}
-  .app{min-height:100vh}
-  .topbar{
-    position:sticky; top:0; z-index:50;
-    background:linear-gradient(110deg,var(--navy),#10294d 72%,#1d3656);
-    color:white; box-shadow:0 10px 30px rgba(11,30,58,.18);
-    border-bottom:1px solid rgba(230,201,143,.5);
-  }
-  .topbar-inner{max-width:1800px;margin:auto;padding:14px 24px;display:flex;gap:18px;align-items:center;justify-content:space-between}
-  .brand{display:flex;align-items:center;gap:16px;min-width:300px}
-  .brand img{height:52px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.15))}
-  .brand-copy h1{font-family:Georgia, 'Times New Roman',serif;font-size:25px;line-height:1;margin:0 0 4px;font-weight:500;letter-spacing:.2px}
-  .brand-copy p{margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#eedcb7}
-  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-  .btn{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.08);color:white;border-radius:10px;padding:9px 12px;cursor:pointer;transition:.15s;display:inline-flex;gap:7px;align-items:center;font-weight:650;font-size:13px}
-  .btn:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}
-  .btn.gold{background:var(--gold);border-color:var(--gold);color:#12213a}
-  .btn.gold:hover{background:#d8ad60}
-  .btn.light{background:#fff;color:var(--navy);border-color:#fff}
-  .btn.danger{color:#ffd8d8}
-  .btn.small{padding:6px 9px;font-size:12px;border-radius:8px}
-  .hero{max-width:1800px;margin:0 auto;padding:22px 24px 12px;display:grid;grid-template-columns:1.35fr .65fr;gap:18px}
-  .hero-card{background:rgba(255,255,255,.74);border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow);backdrop-filter:blur(7px)}
-  .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#8a6b37;font-weight:800;margin-bottom:7px}
-  .hero h2{font-family:Georgia, 'Times New Roman',serif;font-weight:500;font-size:32px;margin:0 0 8px;color:var(--navy)}
-  .hero p{margin:0;line-height:1.5;color:#555f70}
-  .purpose{background:linear-gradient(135deg,var(--navy),#142e54);color:white;border-color:#243a5a;position:relative;overflow:hidden}
-  .purpose:after{content:"";position:absolute;right:-75px;top:-110px;width:230px;height:230px;border:1px solid rgba(200,154,74,.5);border-radius:50%}
-  .purpose .eyebrow{color:#e9c988}
-  .purpose h3{font-family:Georgia,serif;font-size:25px;margin:3px 0 6px;color:#f4dfae;font-weight:500}
-  .purpose p{color:#eef1f5;max-width:630px}
-  .board-shell{max-width:1800px;margin:0 auto;padding:10px 24px 34px}
-  .board-meta{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin:0 0 10px}
-  .board-meta h3{margin:0;font-family:Georgia,serif;font-size:22px;font-weight:500;color:var(--navy)}
-  .board-meta .hint{font-size:12px;color:var(--muted);margin-top:4px}
-  .legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:#6c7280}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-  .board-wrap{background:white;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:auto;max-height:calc(100vh - 255px);position:relative}
-  table{border-collapse:separate;border-spacing:0;min-width:1550px;width:max-content;background:white}
-  th,td{border-right:1px solid #eadfcf;border-bottom:1px solid #eadfcf;vertical-align:top}
-  thead th{position:sticky;top:0;z-index:20;background:var(--navy);color:white;min-width:240px;width:240px;padding:0}
-  thead th.corner{left:0;z-index:35;min-width:245px;width:245px;background:#08192f;border-right:1px solid #e2c98f}
-  .corner-inner{padding:16px 18px}
-  .corner-title{font-family:Georgia,serif;font-size:18px;color:#f3dfb1;margin:0 0 5px;font-weight:500}
-  .corner-sub{font-size:11px;color:#cbd4e0;line-height:1.35}
-  .stage-head{padding:12px 12px 10px;min-height:86px;position:relative;cursor:grab;background:linear-gradient(180deg,#10294d,#0b1e3a)}
-  .stage-head.dragging{opacity:.5}
-  .stage-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#e8c981;font-weight:800;margin-bottom:5px}
-  .stage-title{font-family:Georgia,serif;font-weight:500;font-size:18px;line-height:1.1;padding-right:26px}
-  .stage-tools{position:absolute;right:7px;top:8px;display:flex;flex-direction:column;gap:5px}
-  .icon-btn{width:23px;height:23px;border-radius:7px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#fff;cursor:pointer;display:grid;place-items:center;font-size:12px}
-  .icon-btn:hover{background:rgba(255,255,255,.18)}
-  tbody th{position:sticky;left:0;z-index:12;width:245px;min-width:245px;background:#fffaf1;padding:0;text-align:left}
-  .row-label{padding:13px 14px 12px;border-left:6px solid var(--rowColor,#c89a4a);min-height:72px;position:relative}
-  .row-label strong{font-size:13px;color:var(--navy);display:block;padding-right:24px}
-  .row-label small{display:block;color:#898071;line-height:1.35;margin-top:4px;font-size:10.5px}
-  .row-delete{position:absolute;right:7px;top:8px;border:0;background:transparent;color:#aaa;cursor:pointer;font-size:13px;opacity:.25}
-  tr:hover .row-delete{opacity:1}
-  td{width:240px;min-width:240px;background:#fff;padding:0}
-  .cell{min-height:72px;padding:12px 13px;line-height:1.45;font-size:12.5px;outline:none;white-space:pre-wrap;transition:background .12s}
-  .cell:focus{background:#fff9ec;box-shadow:inset 0 0 0 2px rgba(200,154,74,.35)}
-  .cell:empty:before{content:attr(data-placeholder);color:#b6b1aa;font-style:italic}
-  .emotion-cell{padding:10px 9px;min-height:72px;display:flex;align-items:center;justify-content:center}
-  .emotion-scale{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%}
-  .emo{border:1px solid #d9d5cf;border-radius:9px;background:#fff;padding:7px 3px;text-align:center;cursor:pointer;font-size:11px;color:#6b7180;transition:.12s}
-  .emo:hover{transform:translateY(-1px);border-color:#aeb5be}
-  .emo.active{color:white;border-color:transparent;font-weight:800}
-  .emo[data-v="-2"].active{background:#9e4a4a}.emo[data-v="-1"].active{background:#cc7b4d}.emo[data-v="0"].active{background:#9b927f}.emo[data-v="1"].active{background:#4d8c72}.emo[data-v="2"].active{background:#315f99}
-  .project-cell{min-height:108px;padding:10px}
-  .project-mini{border:1px dashed #dcccae;border-radius:10px;padding:9px;background:#fffbf4}
-  .project-mini input,.project-mini select{width:100%;border:0;border-bottom:1px solid #e2d6c2;background:transparent;padding:4px 2px;color:var(--ink);outline:none;font-size:11.5px;margin-bottom:6px}
-  .project-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-  .attach-cell{min-height:72px;padding:9px}
-  .attach-zone{border:1px dashed #d8ceb9;background:#fffcf7;border-radius:10px;padding:8px;min-height:54px}
-  .attach-zone label{font-size:11px;color:#8b7755;cursor:pointer;font-weight:700}
-  .attach-zone input{display:none}
-  .file-pill{display:flex;justify-content:space-between;gap:7px;align-items:center;background:#f2eadb;border-radius:7px;padding:5px 7px;font-size:10.5px;margin-top:5px}
-  .file-pill button{border:0;background:transparent;color:#9b5757;cursor:pointer}
-  .footerbar{max-width:1800px;margin:0 auto 32px;padding:0 24px;display:flex;justify-content:space-between;gap:12px;align-items:center;color:#786f61;font-size:11.5px}
-  .autosave{display:flex;align-items:center;gap:7px}.autosave:before{content:"";width:8px;height:8px;border-radius:50%;background:#4f9c78;box-shadow:0 0 0 4px rgba(79,156,120,.12)}
-  .modal{position:fixed;inset:0;background:rgba(5,15,30,.56);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
-  .modal.show{display:flex}
-  .modal-card{width:min(600px,96vw);background:white;border-radius:18px;box-shadow:0 25px 80px rgba(0,0,0,.28);padding:22px}
-  .modal-card h3{font-family:Georgia,serif;color:var(--navy);font-size:24px;margin:0 0 16px}
-  .field{display:grid;gap:6px;margin-bottom:12px}.field label{font-size:11px;font-weight:800;color:#766b5a;text-transform:uppercase;letter-spacing:.08em}.field input,.field textarea,.field select{border:1px solid #ddd1bd;border-radius:10px;padding:10px;outline:none}.field textarea{min-height:90px;resize:vertical}
-  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.modal-actions .btn{color:var(--navy);border-color:#ddd1bd;background:#fff}.modal-actions .btn.gold{background:var(--gold);border-color:var(--gold)}
-  .presentation .topbar,.presentation .hero,.presentation .footerbar,.presentation .board-meta .legend{display:none}
-  .presentation .board-shell{padding:0;max-width:none}.presentation .board-wrap{border-radius:0;max-height:100vh;border:0;box-shadow:none}.presentation table{min-width:100vw}.presentation .row-delete,.presentation .stage-tools{display:none}
-  .presentation .cell{font-size:14px}.presentation .row-label strong{font-size:14px}
-  @media(max-width:900px){.hero{grid-template-columns:1fr}.brand-copy{display:none}.brand{min-width:auto}.topbar-inner{padding:10px 12px}.toolbar{gap:5px}.btn{padding:8px 9px}.hero,.board-shell,.footerbar{padding-left:12px;padding-right:12px}.hero h2{font-size:26px}}
-  @media print{.topbar,.hero,.footerbar,.board-meta .legend{display:none!important}.board-shell{padding:0!important;max-width:none}.board-wrap{overflow:visible;max-height:none;border:0;box-shadow:none}.stage-tools,.row-delete{display:none!important}table{transform-origin:top left;font-size:8px}body{background:white}}
-</style>
-</head>
-<body>
-<div class="app" id="app">
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <img src="assets/volare_logo.png" alt="Volare" />
-        <div class="brand-copy"><h1>Journey Map Volare</h1><p>Experiencia · Procesos · Comportamientos</p></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Tablero colaborativo de workshop para diseñar el Journey Map de Volare."
+    />
+    <meta name="theme-color" content="#173f38" />
+    <title>Volare · Journey Map Workshop</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand" aria-label="Volare">
+        <span class="brand-mark">V</span>
+        <div>
+          <strong>VOLARE</strong>
+          <span>Journey Map · Workshop</span>
+        </div>
       </div>
-      <div class="toolbar">
-        <button class="btn gold" id="addStageBtn">＋ Momento</button>
-        <button class="btn" id="addRowBtn">＋ Fila</button>
-        <button class="btn" id="importBtn">Importar</button>
-        <button class="btn" id="exportJsonBtn">JSON</button>
-        <button class="btn" id="exportCsvBtn">CSV</button>
-        <button class="btn" id="printBtn">PDF</button>
-        <button class="btn light" id="presentationBtn">Presentar</button>
-        <button class="btn danger" id="resetBtn">Reiniciar</button>
+
+      <div class="session-fields" aria-label="Datos del workshop">
+        <label>
+          <span>Sesión</span>
+          <input id="sessionName" type="text" placeholder="Ej.: Journey Volare v1" />
+        </label>
+        <label>
+          <span>Participantes</span>
+          <input id="participants" type="text" placeholder="Marcelo, Daniel, Seba" />
+        </label>
+        <label>
+          <span>Fecha</span>
+          <input id="sessionDate" type="date" />
+        </label>
       </div>
+
+      <div class="save-status" id="saveStatus" role="status" aria-live="polite">
+        <span class="status-dot"></span>
+        Guardado local
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="Acciones del tablero">
+      <div class="toolbar-group">
+        <button class="primary" id="addMomentBtn" type="button">+ Agregar momento</button>
+        <button id="addRowBtn" type="button">+ Agregar fila</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="expandBtn" type="button">Expandir todo</button>
+        <button id="presentationBtn" type="button">Presentación</button>
+      </div>
+      <div class="toolbar-group toolbar-group-right">
+        <button id="exportJsonBtn" type="button">Guardar respaldo</button>
+        <button id="importBtn" type="button">Abrir respaldo</button>
+        <button id="exportCsvBtn" type="button">Exportar CSV</button>
+        <button id="printBtn" type="button">Imprimir / PDF</button>
+        <button class="danger-ghost" id="resetBtn" type="button">Vaciar tablero</button>
+      </div>
+      <input id="importFile" type="file" accept="application/json,.json" hidden />
+    </nav>
+
+    <main>
+      <section class="workshop-guide" id="workshopGuide" aria-label="Guía de facilitación">
+        <div>
+          <span class="eyebrow">DINÁMICA DE TRABAJO</span>
+          <h1>Construyamos la experiencia desde los ojos del huésped</h1>
+        </div>
+        <ol>
+          <li><strong>Describir</strong><span>qué hace y qué espera.</span></li>
+          <li><strong>Contrastar</strong><span>qué podría vivir realmente.</span></li>
+          <li><strong>Diseñar</strong><span>procesos, espacios y roles.</span></li>
+          <li><strong>Traducir</strong><span>la cultura en comportamientos.</span></li>
+          <li><strong>Priorizar</strong><span>mejoras y próximos pasos.</span></li>
+        </ol>
+      </section>
+
+      <section class="board-shell" aria-label="Tablero Journey Map">
+        <div class="board-scroll" id="boardScroll">
+          <div class="journey-board" id="journeyBoard"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="emotion-menu" id="emotionMenu" role="menu" hidden>
+      <button data-emotion="3" role="menuitem"><i class="emotion-wow"></i>WOW</button>
+      <button data-emotion="2" role="menuitem"><i class="emotion-satisfied"></i>Satisfecho</button>
+      <button data-emotion="1" role="menuitem"><i class="emotion-neutral"></i>Neutro</button>
+      <button data-emotion="0" role="menuitem"><i class="emotion-unsatisfied"></i>Insatisfecho</button>
+      <button data-emotion="clear" role="menuitem">Quitar selección</button>
     </div>
-  </header>
 
-  <section class="hero">
-    <div class="hero-card">
-      <div class="eyebrow">Tablero de trabajo colaborativo · Hipótesis inicial</div>
-      <h2>Diseñar la experiencia desde el recorrido real del huésped</h2>
-      <p>El Journey Map conecta lo que la persona <b>espera y vive</b> con los <b>procesos, lugares, personas y comportamientos</b> que Volare necesita alinear. Editá las celdas en vivo, mové momentos y registrá oportunidades de mejora.</p>
-    </div>
-    <div class="hero-card purpose">
-      <div class="eyebrow">Propósito de trabajo</div>
-      <h3>Lo cotidiano también merece ser cuidado.</h3>
-      <p>La aspiración: resolver, cuidar y generar pertenencia hasta merecer convertirnos en el tercer lugar cotidiano.</p>
-    </div>
-  </section>
+    <dialog id="customRowDialog">
+      <form method="dialog" id="customRowForm">
+        <div class="dialog-heading">
+          <span class="eyebrow">PERSONALIZAR ESTRUCTURA</span>
+          <h2>Agregar una fila</h2>
+          <p>Sumá una dimensión que necesiten explorar durante la conversación.</p>
+        </div>
+        <label>
+          Nombre de la fila
+          <input id="customRowName" type="text" maxlength="60" required placeholder="Ej.: Riesgos previsibles" />
+        </label>
+        <label>
+          Pregunta guía
+          <input id="customRowPrompt" type="text" maxlength="120" placeholder="Ej.: ¿Qué podría romper este momento?" />
+        </label>
+        <div class="dialog-actions">
+          <button value="cancel" type="button" id="cancelRowBtn">Cancelar</button>
+          <button value="default" type="submit" class="primary">Agregar fila</button>
+        </div>
+      </form>
+    </dialog>
 
-  <main class="board-shell">
-    <div class="board-meta">
-      <div><h3>Journey del huésped · Volare v0.1</h3><div class="hint">Doble clic o escribí directamente en las celdas. Arrastrá los encabezados para cambiar el orden.</div></div>
-      <div class="legend"><span class="dot" style="background:#B85858"></span>-2 Fricción <span class="dot" style="background:#9b927f"></span>0 Neutro <span class="dot" style="background:#4d8c72"></span>+1 Satisfecho <span class="dot" style="background:#315f99"></span>+2 WOW</div>
-    </div>
-    <div class="board-wrap" id="boardWrap"><table id="journeyTable"></table></div>
-  </main>
-
-  <div class="footerbar"><div class="autosave" id="saveStatus">Guardado automático en este navegador</div><div>Volare · tablero de trabajo · versión prototipo</div></div>
-</div>
-
-<div class="modal" id="stageModal"><div class="modal-card"><h3>Agregar momento del Journey</h3><div class="field"><label>Nombre del momento</label><input id="newStageName" placeholder="Ej. Visita al comercio" /></div><div class="field"><label>Descripción breve</label><input id="newStageDesc" placeholder="Ej. El huésped ingresa al local elegido" /></div><div class="modal-actions"><button class="btn" data-close="stageModal">Cancelar</button><button class="btn gold" id="saveStageBtn">Agregar</button></div></div></div>
-<div class="modal" id="rowModal"><div class="modal-card"><h3>Agregar fila de análisis</h3><div class="field"><label>Título</label><input id="newRowName" placeholder="Ej. Indicador / señal" /></div><div class="field"><label>Ayuda / pregunta guía</label><input id="newRowHelp" placeholder="Ej. ¿Qué señal nos permite aprender?" /></div><div class="field"><label>Tipo de fila</label><select id="newRowType"><option value="text">Texto editable</option><option value="emotion">Curva emocional</option><option value="project">Proyecto / oportunidad</option><option value="attachments">Adjuntos</option></select></div><div class="field"><label>Color</label><input id="newRowColor" type="color" value="#C89A4A" /></div><div class="modal-actions"><button class="btn" data-close="rowModal">Cancelar</button><button class="btn gold" id="saveRowBtn">Agregar</button></div></div></div>
-<input type="file" id="importFile" accept="application/json" style="display:none" />
-
-<script>
-const KEY='volareJourneyMap_v01';
-const defaultData={
-  title:'Journey del huésped · Volare v0.1',
-  stages:[
-    {id:'s1',name:'Llegada al predio',desc:'Primer contacto visual y acceso'},
-    {id:'s2',name:'Acceso / Seguridad',desc:'Recepción y primera orientación'},
-    {id:'s3',name:'Estacionamiento',desc:'Encontrar un lugar simple y rápido'},
-    {id:'s4',name:'Orientación',desc:'Entender dónde ir y cómo llegar'},
-    {id:'s5',name:'Circulación',desc:'Moverse por Volare con comodidad'},
-    {id:'s6',name:'Interacción comercio',desc:'Entrar, ser recibido y comprar'},
-    {id:'s7',name:'Resolución',desc:'Resolver necesidad, duda o reclamo'},
-    {id:'s8',name:'Salida / Regreso',desc:'Cerrar la visita y querer volver'}
-  ],
-  rows:[
-    {id:'r1',name:'Acción del huésped',help:'¿Qué hace concretamente en este momento?',type:'text',color:'#D09A4A'},
-    {id:'r2',name:'Punto de contacto',help:'¿Con qué persona, lugar o canal interactúa?',type:'text',color:'#2F6D78'},
-    {id:'r3',name:'Expectativa',help:'¿Qué espera, aunque no lo diga?',type:'text',color:'#A55A73'},
-    {id:'r4',name:'Realidad / hipótesis',help:'¿Qué creemos que recibe hoy o debería recibir?',type:'text',color:'#4B5F8B'},
-    {id:'r5',name:'Emoción',help:'¿Cómo se siente en este momento?',type:'emotion',color:'#B36B4A'},
-    {id:'r6',name:'Proceso',help:'¿Qué proceso sostiene la experiencia?',type:'text',color:'#7B6D4A'},
-    {id:'r7',name:'Lugar / detalles',help:'¿Qué debe aportar el espacio físico?',type:'text',color:'#5D8872'},
-    {id:'r8',name:'Personas / roles',help:'¿Quién participa y con qué responsabilidad?',type:'text',color:'#6D5D87'},
-    {id:'r9',name:'Cultura / comportamiento',help:'¿Qué rasgos y conductas Volare deben aparecer?',type:'text',color:'#BA7B42'},
-    {id:'r10',name:'Indicador / señal',help:'¿Qué podemos medir, observar o escuchar?',type:'text',color:'#4E7B91'},
-    {id:'r11',name:'Oportunidad / proyecto',help:'¿Qué deberíamos mejorar, probar o diseñar?',type:'project',color:'#9A5964'},
-    {id:'r12',name:'Adjuntos',help:'Evidencias, fotos, procesos, documentos.',type:'attachments',color:'#8C806B'}
-  ],
-  cells:{
-    'r1_s1':'Ingresa a Volare desde la vía pública.','r1_s2':'Pasa por el primer punto de seguridad / acceso.','r1_s3':'Busca un lugar donde dejar el auto.','r1_s4':'Busca el local o servicio al que quiere ir.','r1_s5':'Camina por el predio.','r1_s6':'Ingresa a uno o más comercios.','r1_s7':'Resuelve su necesidad o pide ayuda.','r1_s8':'Vuelve al auto, sale y evalúa si regresaría.',
-    'r2_s1':'Acceso vehicular, cartelería, entorno exterior.','r2_s2':'Seguridad / anfitrión de acceso.','r2_s3':'Calles internas, señalización, seguridad.','r2_s4':'Señalética, mapa, personas, futuro Club Volare.','r2_s5':'Veredas, forestación, iluminación, limpieza, convivencia.','r2_s6':'Equipo del comercio + espacio del local.','r2_s7':'Comercio, administración o seguridad según el caso.','r2_s8':'Estacionamiento, egreso, comunicación posterior.',
-    'r3_s1':'“Quiero entrar sin complicaciones y entender rápido dónde estoy.”','r3_s2':'“Quiero sentirme recibido y seguro, no controlado.”','r3_s3':'“Quiero encontrar lugar rápido y quedar razonablemente cerca.”','r3_s4':'“Quiero saber dónde está lo que busco sin perder tiempo.”','r3_s5':'“Quiero moverme cómodo, limpio y tranquilo.”','r3_s6':'“Quiero resolver mi compra con buena atención y agilidad.”','r3_s7':'“Si tengo un problema, quiero que alguien se haga cargo.”','r3_s8':'“Quiero salir fácil y sentir que valió la pena venir.”',
-    'r4_s1':'Hipótesis: acceso claro, cuidado y ordenado.','r4_s2':'Bienvenida breve + orientación según necesidad.','r4_s3':'Disponibilidad alta, pero falta validar cómo se guiará en horas pico.','r4_s4':'A diseñar: señalización + conocimiento transversal del predio.','r4_s5':'La arquitectura y paisajismo deben transmitir cuidado consistente.','r4_s6':'La experiencia dependerá de múltiples culturas comerciales: necesitamos criterios compartidos.','r4_s7':'A diseñar: autonomía, escalamiento y recuperación del servicio.','r4_s8':'A diseñar: despedida, salida, escucha y mecanismos para volver.',
-    'r6_s3':'Monitorear ocupación → identificar zonas libres → orientar → aprender de horas pico.','r7_s3':'Señalización clara, circulación simple, iluminación, sombra, accesibilidad.','r8_s3':'Seguridad + administración + comercios con visibilidad del sector.','r9_s3':'Reconocimiento · predisposición · proactividad · empatía. Conducta: observar, saludar, orientar y anticipar.','r10_s3':'Tiempo para estacionar · autos que dan vueltas · consultas · abandonos · ocupación por zona.',
-    'r6_s4':'Inventario de locales actualizado + nomenclatura común + mecanismo de orientación.','r7_s4':'Totems / mapas / señalización coherente; futura navegación digital.','r8_s4':'Todos los anfitriones deben poder orientar, no solo administración.','r9_s4':'Responsabilidad compartida: “aunque no sea mi local, ayudo a que avances”.','r10_s4':'Consultas repetidas · lugares donde se detiene la gente · tiempo hasta encontrar destino.',
-    'r9_s6':'Reconocer · escuchar · empatizar · resolver. No mecanizar, no derivar sin acompañar.',
-    'r9_s7':'Autonomía con criterio + responsabilidad compartida. “No me corresponde” no cierra la interacción.',
-    'r10_s8':'Intención de regreso · frecuencia · recomendación · reclamos · uso futuro de Club Volare.'
-  },
-  emotions:{s1:0,s2:1,s3:0,s4:0,s5:1,s6:1,s7:1,s8:1},
-  projects:{
-    s3:{name:'Diseño de experiencia de estacionamiento',priority:'Alta',owner:'A definir',date:'',objective:'Reducir fricción y orientar proactivamente en horas pico.'},
-    s4:{name:'Sistema de orientación Volare',priority:'Alta',owner:'A definir',date:'',objective:'Que cualquier huésped encuentre su destino sin pérdida de tiempo.'},
-    s7:{name:'Protocolo de recuperación',priority:'Media',owner:'A definir',date:'',objective:'Definir autonomía, escalamiento y cierre de incidentes.'}
-  },
-  attachments:{}
-};
-let data=loadData();
-let draggedStageId=null;
-function uid(p){return p+'_'+Math.random().toString(36).slice(2,8)}
-function loadData(){try{const x=localStorage.getItem(KEY);return x?JSON.parse(x):structuredClone(defaultData)}catch(e){return structuredClone(defaultData)}}
-let saveTimer;
-function saveData(){clearTimeout(saveTimer);document.getElementById('saveStatus').textContent='Guardando…';saveTimer=setTimeout(()=>{localStorage.setItem(KEY,JSON.stringify(data));document.getElementById('saveStatus').textContent='Guardado automático en este navegador'},250)}
-function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function render(){
- const table=document.getElementById('journeyTable');
- let html='<thead><tr><th class="corner"><div class="corner-inner"><div class="corner-title">Momento del huésped</div><div class="corner-sub">Cada columna representa una escena del recorrido. Arrastrá para reordenar.</div></div></th>';
- data.stages.forEach((s,i)=>{html+=`<th draggable="true" data-stage="${s.id}"><div class="stage-head"><div class="stage-kicker">Momento ${i+1}</div><div class="stage-title" contenteditable="true" data-stage-title="${s.id}">${esc(s.name)}</div><div class="stage-tools"><button class="icon-btn" title="Eliminar" data-delete-stage="${s.id}">×</button></div></div></th>`});
- html+='</tr></thead><tbody>';
- data.rows.forEach(r=>{
-   html+=`<tr><th><div class="row-label" style="--rowColor:${r.color}"><strong contenteditable="true" data-row-title="${r.id}">${esc(r.name)}</strong><small contenteditable="true" data-row-help="${r.id}">${esc(r.help||'')}</small><button class="row-delete" title="Eliminar fila" data-delete-row="${r.id}">×</button></div></th>`;
-   data.stages.forEach(s=>{html+=`<td>${renderCell(r,s)}</td>`});
-   html+='</tr>';
- });
- html+='</tbody>'; table.innerHTML=html; bindTable();
-}
-function renderCell(r,s){
- if(r.type==='emotion'){const v=data.emotions[s.id]??0;return `<div class="emotion-cell"><div class="emotion-scale">${[-2,-1,0,1,2].map(n=>`<button class="emo ${n===v?'active':''}" data-emo-stage="${s.id}" data-v="${n}">${n===-2?'−2':n===-1?'−1':n===0?'0':n===1?'+1':'+2'}</button>`).join('')}</div></div>`}
- if(r.type==='project'){const p=data.projects[s.id]||{name:'',priority:'Media',owner:'',date:'',objective:''};return `<div class="project-cell"><div class="project-mini"><input data-proj="name" data-stage="${s.id}" placeholder="Proyecto / oportunidad" value="${esc(p.name)}"><div class="project-grid"><select data-proj="priority" data-stage="${s.id}"><option ${p.priority==='Alta'?'selected':''}>Alta</option><option ${p.priority==='Media'?'selected':''}>Media</option><option ${p.priority==='Baja'?'selected':''}>Baja</option></select><input data-proj="owner" data-stage="${s.id}" placeholder="Responsable" value="${esc(p.owner)}"></div><input data-proj="objective" data-stage="${s.id}" placeholder="Objetivo / resultado esperado" value="${esc(p.objective)}"><input data-proj="date" data-stage="${s.id}" type="date" value="${esc(p.date)}"></div></div>`}
- if(r.type==='attachments'){const key=r.id+'_'+s.id;const files=data.attachments[key]||[];return `<div class="attach-cell"><div class="attach-zone"><label>＋ Adjuntar evidencia<input type="file" multiple data-attach="${key}"></label>${files.map((f,i)=>`<div class="file-pill"><span title="${esc(f.name)}">📎 ${esc(f.name)}</span><button data-remove-attachment="${key}" data-file-index="${i}">×</button></div>`).join('')}</div></div>`}
- const key=r.id+'_'+s.id;return `<div class="cell" contenteditable="true" data-cell="${key}" data-placeholder="Escribir…">${esc(data.cells[key]||'')}</div>`
-}
-function bindTable(){
- document.querySelectorAll('[data-cell]').forEach(el=>el.addEventListener('input',e=>{data.cells[e.currentTarget.dataset.cell]=e.currentTarget.innerText;saveData()}));
- document.querySelectorAll('[data-stage-title]').forEach(el=>el.addEventListener('input',e=>{const s=data.stages.find(x=>x.id===e.currentTarget.dataset.stageTitle);if(s){s.name=e.currentTarget.innerText;saveData()}}));
- document.querySelectorAll('[data-row-title]').forEach(el=>el.addEventListener('input',e=>{const r=data.rows.find(x=>x.id===e.currentTarget.dataset.rowTitle);if(r){r.name=e.currentTarget.innerText;saveData()}}));
- document.querySelectorAll('[data-row-help]').forEach(el=>el.addEventListener('input',e=>{const r=data.rows.find(x=>x.id===e.currentTarget.dataset.rowHelp);if(r){r.help=e.currentTarget.innerText;saveData()}}));
- document.querySelectorAll('[data-emo-stage]').forEach(b=>b.addEventListener('click',e=>{data.emotions[e.currentTarget.dataset.emoStage]=+e.currentTarget.dataset.v;saveData();render()}));
- document.querySelectorAll('[data-proj]').forEach(el=>el.addEventListener('input',e=>{const sid=e.currentTarget.dataset.stage;data.projects[sid]=data.projects[sid]||{};data.projects[sid][e.currentTarget.dataset.proj]=e.currentTarget.value;saveData()}));
- document.querySelectorAll('[data-delete-stage]').forEach(b=>b.addEventListener('click',()=>deleteStage(b.dataset.deleteStage)));
- document.querySelectorAll('[data-delete-row]').forEach(b=>b.addEventListener('click',()=>deleteRow(b.dataset.deleteRow)));
- document.querySelectorAll('thead th[data-stage]').forEach(th=>{th.addEventListener('dragstart',e=>{draggedStageId=th.dataset.stage;th.querySelector('.stage-head').classList.add('dragging');e.dataTransfer.effectAllowed='move'});th.addEventListener('dragend',()=>{th.querySelector('.stage-head').classList.remove('dragging');draggedStageId=null});th.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move'});th.addEventListener('drop',e=>{e.preventDefault();const target=th.dataset.stage;if(!draggedStageId||target===draggedStageId)return;const from=data.stages.findIndex(x=>x.id===draggedStageId),to=data.stages.findIndex(x=>x.id===target);const [item]=data.stages.splice(from,1);data.stages.splice(to,0,item);saveData();render()})});
- document.querySelectorAll('[data-attach]').forEach(inp=>inp.addEventListener('change',async e=>{const key=e.currentTarget.dataset.attach;data.attachments[key]=data.attachments[key]||[];for(const file of e.currentTarget.files){data.attachments[key].push({name:file.name,size:file.size,type:file.type,lastModified:file.lastModified})}saveData();render()}));
- document.querySelectorAll('[data-remove-attachment]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.removeAttachment,i=+b.dataset.fileIndex;data.attachments[k].splice(i,1);saveData();render()}));
-}
-function deleteStage(id){if(data.stages.length<=1)return alert('Debe quedar al menos un momento.');if(!confirm('¿Eliminar este momento y todo su contenido?'))return;data.stages=data.stages.filter(x=>x.id!==id);Object.keys(data.cells).filter(k=>k.endsWith('_'+id)).forEach(k=>delete data.cells[k]);delete data.emotions[id];delete data.projects[id];Object.keys(data.attachments).filter(k=>k.endsWith('_'+id)).forEach(k=>delete data.attachments[k]);saveData();render()}
-function deleteRow(id){if(!confirm('¿Eliminar esta fila?'))return;data.rows=data.rows.filter(x=>x.id!==id);Object.keys(data.cells).filter(k=>k.startsWith(id+'_')).forEach(k=>delete data.cells[k]);saveData();render()}
-function showModal(id){document.getElementById(id).classList.add('show')}function hideModal(id){document.getElementById(id).classList.remove('show')}
-document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>hideModal(b.dataset.close)));
-document.getElementById('addStageBtn').onclick=()=>{document.getElementById('newStageName').value='';document.getElementById('newStageDesc').value='';showModal('stageModal');setTimeout(()=>document.getElementById('newStageName').focus(),50)};
-document.getElementById('saveStageBtn').onclick=()=>{const name=document.getElementById('newStageName').value.trim();if(!name)return;data.stages.push({id:uid('s'),name,desc:document.getElementById('newStageDesc').value.trim()});saveData();render();hideModal('stageModal')};
-document.getElementById('addRowBtn').onclick=()=>{document.getElementById('newRowName').value='';document.getElementById('newRowHelp').value='';showModal('rowModal');setTimeout(()=>document.getElementById('newRowName').focus(),50)};
-document.getElementById('saveRowBtn').onclick=()=>{const name=document.getElementById('newRowName').value.trim();if(!name)return;data.rows.push({id:uid('r'),name,help:document.getElementById('newRowHelp').value.trim(),type:document.getElementById('newRowType').value,color:document.getElementById('newRowColor').value});saveData();render();hideModal('rowModal')};
-function download(filename,text,type='application/json'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-document.getElementById('exportJsonBtn').onclick=()=>download('Journey_Map_Volare.json',JSON.stringify(data,null,2));
-document.getElementById('exportCsvBtn').onclick=()=>{const q=v=>'"'+String(v??'').replaceAll('"','""').replaceAll('\n',' ')+'"';let rows=[['Capa',...data.stages.map(s=>s.name)]];data.rows.forEach(r=>{if(r.type==='emotion')rows.push([r.name,...data.stages.map(s=>data.emotions[s.id]??0)]);else if(r.type==='project')rows.push([r.name,...data.stages.map(s=>(data.projects[s.id]?.name||'')+' | '+(data.projects[s.id]?.objective||''))]);else if(r.type==='attachments')rows.push([r.name,...data.stages.map(s=>(data.attachments[r.id+'_'+s.id]||[]).map(f=>f.name).join('; '))]);else rows.push([r.name,...data.stages.map(s=>data.cells[r.id+'_'+s.id]||'')])});download('Journey_Map_Volare.csv',rows.map(r=>r.map(q).join(',')).join('\n'),'text/csv')};
-document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();document.getElementById('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const parsed=JSON.parse(reader.result);if(!parsed.stages||!parsed.rows)throw 0;data=parsed;saveData();render()}catch{alert('Archivo JSON no válido.')}};reader.readAsText(f)};
-document.getElementById('printBtn').onclick=()=>window.print();
-document.getElementById('presentationBtn').onclick=()=>{document.body.classList.toggle('presentation');if(document.body.classList.contains('presentation'))document.documentElement.requestFullscreen?.().catch(()=>{})};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('presentation'))document.body.classList.remove('presentation')});
-document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Volver al ejemplo inicial de Volare? Se perderán los cambios guardados en este navegador.')){data=structuredClone(defaultData);saveData();render()}};
-render();
-</script>
-</body>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
 </html>
