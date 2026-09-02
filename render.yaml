@@ -7,6 +7,9 @@ services:
     autoDeployTrigger: commit
     headers:
       - path: /*
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /*
         name: X-Frame-Options
         value: SAMEORIGIN
       - path: /*

@@ -120,6 +120,8 @@
   .attach-zone label{font-size:11px;color:#8b7755;cursor:pointer;font-weight:700}
   .attach-zone input{display:none}
   .file-pill{display:flex;justify-content:space-between;gap:7px;align-items:center;background:#f2eadb;border-radius:7px;padding:5px 7px;font-size:10.5px;margin-top:5px}
+  .file-pill a,.file-pill span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5c4d3a;text-decoration:none}
+  .file-pill a:hover{text-decoration:underline}
   .file-pill button{border:0;background:transparent;color:#9b5757;cursor:pointer}
   .footerbar{max-width:1800px;margin:0 auto 32px;padding:0 24px;display:flex;justify-content:space-between;gap:12px;align-items:center;color:#786f61;font-size:11.5px}
   .autosave{display:flex;align-items:center;gap:7px}.autosave:before{content:"";width:8px;height:8px;border-radius:50%;background:#4f9c78;box-shadow:0 0 0 4px rgba(79,156,120,.12)}
@@ -178,7 +180,7 @@
     <div class="board-wrap" id="boardWrap"><table id="journeyTable"></table></div>
   </main>
 
-  <div class="footerbar"><div class="autosave" id="saveStatus">Guardado automático en este navegador</div><div>Volare · tablero de workshop · versión vacía</div></div>
+  <div class="footerbar"><div class="autosave" id="saveStatus">Conectando memoria compartida…</div><div>Volare · tablero compartido · workshop</div></div>
 </div>
 
 <div class="modal" id="stageModal"><div class="modal-card"><h3>Agregar momento del Journey</h3><div class="field"><label>Nombre del momento</label><input id="newStageName" placeholder="Ej. Visita al comercio" /></div><div class="field"><label>Descripción breve</label><input id="newStageDesc" placeholder="Ej. El huésped ingresa al local elegido" /></div><div class="modal-actions"><button class="btn" data-close="stageModal">Cancelar</button><button class="btn gold" id="saveStageBtn">Agregar</button></div></div></div>
@@ -194,6 +196,13 @@
 
 <script>
 const KEY='volareJourneyMapWorkshop_v02';
+const SUPABASE_URL='https://iuazqrucdcpmsbtverco.supabase.co';
+const SUPABASE_KEY='sb_publishable_x6EoT8io-gNPBLRLmYwmig_gpoPi-Qg';
+const BOARD_ID='volare-main';
+const BOARD_TABLE='volare_boards';
+const FILE_BUCKET='volare-journey-files';
+const MAX_FILE_SIZE=25*1024*1024;
+const API_HEADERS={apikey:SUPABASE_KEY};
 const EMOTIONS={
   0:{label:'Insatisfecho',color:'#B85858',y:178},
   1:{label:'Neutro',color:'#D79A35',y:130},
@@ -235,9 +244,102 @@ let data=loadData();
 let draggedStageId=null;
 let draggedRowId=null;
 function uid(p){return p+'_'+Math.random().toString(36).slice(2,8)}
-function loadData(){try{const x=localStorage.getItem(KEY);return x?JSON.parse(x):structuredClone(defaultData)}catch(e){return structuredClone(defaultData)}}
-let saveTimer;
-function saveData(){clearTimeout(saveTimer);document.getElementById('saveStatus').textContent='Guardando…';saveTimer=setTimeout(()=>{localStorage.setItem(KEY,JSON.stringify(data));document.getElementById('saveStatus').textContent='Guardado automático en este navegador'},250)}
+function normalizeData(candidate){
+ const base=structuredClone(defaultData);
+ if(!candidate||!Array.isArray(candidate.stages)||!Array.isArray(candidate.rows))return base;
+ return {...base,...candidate,stages:candidate.stages,rows:candidate.rows,cells:candidate.cells||{},emotions:candidate.emotions||{},projects:candidate.projects||{},attachments:candidate.attachments||{}};
+}
+function loadData(){try{const x=localStorage.getItem(KEY);return x?normalizeData(JSON.parse(x)):structuredClone(defaultData)}catch(e){return structuredClone(defaultData)}}
+let saveTimer=null;
+let cloudSaveRunning=false;
+let cloudSavePending=false;
+let lastCloudUpdatedAt=0;
+let localRevision=0;
+function setSaveStatus(message){const el=document.getElementById('saveStatus');if(el)el.textContent=message}
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(data))}
+function saveData(){
+ localRevision+=1;
+ saveLocal();
+ setSaveStatus('Guardando en la nube…');
+ clearTimeout(saveTimer);
+ saveTimer=setTimeout(()=>saveCloudBoard(),700);
+}
+async function saveCloudBoard(force=false){
+ if(cloudSaveRunning){cloudSavePending=true;return}
+ cloudSaveRunning=true;
+ const snapshot=JSON.stringify([{id:BOARD_ID,state:data}]);
+ try{
+   const response=await fetch(`${SUPABASE_URL}/rest/v1/${BOARD_TABLE}?on_conflict=id`,{method:'POST',headers:{...API_HEADERS,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'},body:snapshot});
+   if(!response.ok)throw new Error(await response.text());
+   const rows=await response.json();
+   lastCloudUpdatedAt=Date.parse(rows[0]?.updated_at||new Date().toISOString());
+   setSaveStatus(`Guardado compartido · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
+ }catch(error){
+   console.error('No se pudo guardar el tablero compartido',error);
+   setSaveStatus(error.message?.includes('volare_boards')?'Falta activar la memoria compartida':'Sin conexión · copia local guardada');
+ }finally{
+   cloudSaveRunning=false;
+   if(cloudSavePending){cloudSavePending=false;saveCloudBoard()}
+ }
+}
+async function fetchCloudBoard(){
+ const response=await fetch(`${SUPABASE_URL}/rest/v1/${BOARD_TABLE}?select=state,updated_at&id=eq.${encodeURIComponent(BOARD_ID)}&limit=1`,{headers:{...API_HEADERS,Accept:'application/json'},cache:'no-store'});
+ if(!response.ok)throw new Error(await response.text());
+ const rows=await response.json();
+ return rows[0]||null;
+}
+async function initializeSharedBoard(){
+ const revisionAtStart=localRevision;
+ setSaveStatus('Conectando memoria compartida…');
+ try{
+   const remote=await fetchCloudBoard();
+   if(remote?.state&&localRevision===revisionAtStart){
+     data=normalizeData(remote.state);
+     lastCloudUpdatedAt=Date.parse(remote.updated_at||0);
+     saveLocal();
+     render();
+     setSaveStatus('Tablero compartido cargado');
+   }else if(!remote||localRevision!==revisionAtStart){
+     await saveCloudBoard(true);
+   }
+ }catch(error){
+   console.error('No se pudo cargar el tablero compartido',error);
+   setSaveStatus(error.message?.includes('volare_boards')?'Falta activar la memoria compartida':'Sin conexión · usando copia local');
+ }
+ window.setInterval(checkForCloudChanges,15000);
+}
+function isActivelyEditing(){
+ const active=document.activeElement;
+ return !!active&&(active.matches?.('[contenteditable="true"],input,textarea,select')||document.body.classList.contains('is-row-dragging'));
+}
+async function checkForCloudChanges(){
+ if(cloudSaveRunning||isActivelyEditing())return;
+ try{
+   const remote=await fetchCloudBoard();
+   const remoteTime=Date.parse(remote?.updated_at||0);
+   if(remote?.state&&remoteTime>lastCloudUpdatedAt+500){
+     data=normalizeData(remote.state);
+     lastCloudUpdatedAt=remoteTime;
+     saveLocal();
+     render();
+     setSaveStatus('Cambios compartidos actualizados');
+   }
+ }catch(error){console.warn('No se pudieron comprobar cambios compartidos',error)}
+}
+function safeFilename(name){return name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'archivo'}
+function encodedObjectPath(path){return path.split('/').map(encodeURIComponent).join('/')}
+async function uploadAttachment(file,key){
+ if(file.size>MAX_FILE_SIZE)throw new Error(`“${file.name}” supera el límite de 25 MB.`);
+ const path=`${BOARD_ID}/${key}/${Date.now()}-${uid('file')}-${safeFilename(file.name)}`;
+ const response=await fetch(`${SUPABASE_URL}/storage/v1/object/${FILE_BUCKET}/${encodedObjectPath(path)}`,{method:'POST',headers:{...API_HEADERS,'x-upsert':'true','Content-Type':file.type||'application/octet-stream'},body:file});
+ if(!response.ok)throw new Error(await response.text());
+ return {name:file.name,size:file.size,type:file.type,lastModified:file.lastModified,path,url:`${SUPABASE_URL}/storage/v1/object/public/${FILE_BUCKET}/${encodedObjectPath(path)}`};
+}
+async function deleteCloudAttachment(path){
+ if(!path)return;
+ const response=await fetch(`${SUPABASE_URL}/storage/v1/object/${FILE_BUCKET}/${encodedObjectPath(path)}`,{method:'DELETE',headers:API_HEADERS});
+ if(!response.ok)console.warn('No se pudo borrar el archivo del almacenamiento',await response.text());
+}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function render(){
  const table=document.getElementById('journeyTable');
@@ -260,7 +362,7 @@ function renderCell(r,s){
    return `<div class="emotion-cell">${segment}<button class="emotion-point ${selected?'':'empty'}" style="top:${selected?emotion.y-9:104}px;color:${selected?emotion.color:'#b7ad9c'};background:${selected?emotion.color:'#fff'}" data-emotion-point="${s.id}" title="${selected?emotion.label:'Seleccionar emoción'}" aria-label="${selected?emotion.label:'Seleccionar emoción'}"></button></div>`
  }
  if(r.type==='project'){const p=data.projects[s.id]||{name:'',priority:'Media',owner:'',date:'',objective:''};return `<div class="project-cell"><div class="project-mini"><input data-proj="name" data-stage="${s.id}" placeholder="Proyecto / oportunidad" value="${esc(p.name)}"><div class="project-grid"><select data-proj="priority" data-stage="${s.id}"><option ${p.priority==='Alta'?'selected':''}>Alta</option><option ${p.priority==='Media'?'selected':''}>Media</option><option ${p.priority==='Baja'?'selected':''}>Baja</option></select><input data-proj="owner" data-stage="${s.id}" placeholder="Responsable" value="${esc(p.owner)}"></div><input data-proj="objective" data-stage="${s.id}" placeholder="Objetivo / resultado esperado" value="${esc(p.objective)}"><input data-proj="date" data-stage="${s.id}" type="date" value="${esc(p.date)}"></div></div>`}
- if(r.type==='attachments'){const key=r.id+'_'+s.id;const files=data.attachments[key]||[];return `<div class="attach-cell"><div class="attach-zone"><label>＋ Adjuntar evidencia<input type="file" multiple data-attach="${key}"></label>${files.map((f,i)=>`<div class="file-pill"><span title="${esc(f.name)}">📎 ${esc(f.name)}</span><button data-remove-attachment="${key}" data-file-index="${i}">×</button></div>`).join('')}</div></div>`}
+ if(r.type==='attachments'){const key=r.id+'_'+s.id;const files=data.attachments[key]||[];return `<div class="attach-cell"><div class="attach-zone"><label>＋ Adjuntar evidencia<input type="file" multiple data-attach="${key}"></label>${files.map((f,i)=>`<div class="file-pill">${f.url?`<a href="${esc(f.url)}" target="_blank" rel="noopener" title="Abrir ${esc(f.name)}">📎 ${esc(f.name)}</a>`:`<span title="${esc(f.name)}">📎 ${esc(f.name)}</span>`}<button data-remove-attachment="${key}" data-file-index="${i}" title="Eliminar archivo">×</button></div>`).join('')}</div></div>`}
  const key=r.id+'_'+s.id;return `<div class="cell" contenteditable="true" data-cell="${key}" data-placeholder="Escribir…">${esc(data.cells[key]||'')}</div>`
 }
 function bindTable(){
@@ -275,8 +377,8 @@ function bindTable(){
  document.querySelectorAll('[data-move-row]').forEach(b=>b.addEventListener('click',()=>moveRow(b.dataset.moveRow,Number(b.dataset.rowDirection))));
  document.querySelectorAll('thead th[data-stage]').forEach(th=>{th.addEventListener('dragstart',e=>{draggedStageId=th.dataset.stage;th.querySelector('.stage-head').classList.add('dragging');e.dataTransfer.effectAllowed='move'});th.addEventListener('dragend',()=>{th.querySelector('.stage-head').classList.remove('dragging');draggedStageId=null});th.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move'});th.addEventListener('drop',e=>{e.preventDefault();const target=th.dataset.stage;if(!draggedStageId||target===draggedStageId)return;const from=data.stages.findIndex(x=>x.id===draggedStageId),to=data.stages.findIndex(x=>x.id===target);const [item]=data.stages.splice(from,1);data.stages.splice(to,0,item);saveData();render()})});
  document.querySelectorAll('[data-drag-row]').forEach(handle=>handle.addEventListener('pointerdown',e=>startRowDrag(e,handle)));
- document.querySelectorAll('[data-attach]').forEach(inp=>inp.addEventListener('change',async e=>{const key=e.currentTarget.dataset.attach;data.attachments[key]=data.attachments[key]||[];for(const file of e.currentTarget.files){data.attachments[key].push({name:file.name,size:file.size,type:file.type,lastModified:file.lastModified})}saveData();render()}));
- document.querySelectorAll('[data-remove-attachment]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.removeAttachment,i=+b.dataset.fileIndex;data.attachments[k].splice(i,1);saveData();render()}));
+ document.querySelectorAll('[data-attach]').forEach(inp=>inp.addEventListener('change',async e=>{const key=e.currentTarget.dataset.attach,files=[...e.currentTarget.files];if(!files.length)return;data.attachments[key]=data.attachments[key]||[];for(let i=0;i<files.length;i++){try{setSaveStatus(`Subiendo archivo ${i+1} de ${files.length}…`);data.attachments[key].push(await uploadAttachment(files[i],key));saveLocal()}catch(error){console.error(error);alert(`No se pudo subir el archivo. ${error.message}`)}}saveData();render()}));
+ document.querySelectorAll('[data-remove-attachment]').forEach(b=>b.addEventListener('click',async()=>{const k=b.dataset.removeAttachment,i=+b.dataset.fileIndex,file=data.attachments[k]?.[i];if(!file)return;if(!confirm(`¿Eliminar “${file.name}”?`))return;await deleteCloudAttachment(file.path);data.attachments[k].splice(i,1);saveData();render()}));
 }
 function moveRow(id,direction){const from=data.rows.findIndex(x=>x.id===id),to=from+direction;if(from<0||to<0||to>=data.rows.length)return;[data.rows[from],data.rows[to]]=[data.rows[to],data.rows[from]];saveData();render()}
 function reorderRow(sourceId,targetId){if(!sourceId||!targetId||sourceId===targetId)return;const from=data.rows.findIndex(x=>x.id===sourceId),to=data.rows.findIndex(x=>x.id===targetId);if(from<0||to<0)return;const [item]=data.rows.splice(from,1);data.rows.splice(to,0,item);saveData();render()}
@@ -322,8 +424,9 @@ document.getElementById('importBtn').onclick=()=>document.getElementById('import
 document.getElementById('printBtn').onclick=()=>window.print();
 document.getElementById('presentationBtn').onclick=()=>{document.body.classList.toggle('presentation');if(document.body.classList.contains('presentation'))document.documentElement.requestFullscreen?.().catch(()=>{})};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('presentation'))document.body.classList.remove('presentation')});
-document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Vaciar todo el tablero? Se perderán los cambios guardados en este navegador.')){data=structuredClone(defaultData);saveData();render()}};
+document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Vaciar todo el tablero compartido? El cambio será visible para todos.')){data=structuredClone(defaultData);saveData();render()}};
 render();
+initializeSharedBoard();
 </script>
 </body>
 </html>
