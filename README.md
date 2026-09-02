@@ -1,46 +1,47 @@
 # Volare · Journey Map Workshop
 
-Versión vacía y facilitada del tablero Journey Map de Volare, preparada para completar en vivo con Marcelo y Daniel.
+Versión vacía del tablero original `Volare_Journey_Map_Standalone.html`, preparada para completar en vivo con Marcelo y Daniel.
 
-## Qué conserva
+## Qué conserva del original
 
-- La estructura completa del journey: acciones, puntos de contacto, expectativas, realidad, curva emocional, procesos, lugar, personas, cultura, indicadores, oportunidades y adjuntos.
-- Curva emocional interactiva con cuatro niveles: Insatisfecho, Neutro, Satisfecho y WOW.
-- Edición directa de todas las celdas.
-- Agregar, duplicar, mover y eliminar momentos.
-- Agregar, mover y eliminar filas personalizadas.
-- Modo presentación, vista ampliada, impresión/PDF y exportación CSV.
-- Adjuntos por momento.
+- La identidad visual Volare: encabezado azul, logo, tarjetas introductorias, paleta crema y dorada, tipografías y tabla.
+- Las 12 filas de análisis del Journey.
+- Ocho momentos iniciales vacíos y editables.
+- Edición directa de títulos, preguntas guía y celdas.
+- Reordenamiento de momentos por arrastre.
+- Alta y eliminación de momentos y filas.
+- Oportunidades/proyectos con prioridad, responsable, objetivo y fecha.
+- Adjuntos como referencias dentro del tablero.
+- Importación y exportación JSON, exportación CSV, impresión/PDF y modo presentación.
 
-## Cómo guarda los avances
+## Curva emocional
 
-El tablero guarda automáticamente el contenido en el navegador del dispositivo que se está usando. Los adjuntos se guardan en el almacenamiento interno del mismo navegador.
+La fila permite seleccionar cuatro estados:
 
-Para no depender de un único equipo, usar **Guardar respaldo** al terminar cada sesión. El archivo JSON incluye el tablero y sus adjuntos. Luego puede recuperarse con **Abrir respaldo**, incluso desde otra computadora.
+- Insatisfecho
+- Neutro
+- Satisfecho
+- WOW
 
-> Esta versión no sincroniza cambios simultáneamente entre varias computadoras. Para eso hace falta agregar una base de datos y un sistema de acceso compartido.
+Al seleccionar estados en momentos consecutivos, los puntos se conectan automáticamente con una línea.
 
-## Publicar desde GitHub en Render
+## Guardado de avances
 
-1. Crear un repositorio nuevo en GitHub.
-2. Subir todos los archivos de esta carpeta a la raíz del repositorio.
-3. En Render, elegir **New > Blueprint** y conectar el repositorio.
-4. Render detectará `render.yaml` y creará el sitio estático.
-5. Mantener el mismo sitio y dominio para conservar el guardado local en los navegadores que ya lo usaron.
+El contenido se guarda automáticamente en el navegador y dominio donde se utiliza. Para trasladar el trabajo a otro equipo o conservar un respaldo, descargar el archivo JSON desde el botón `JSON` e importarlo luego con `Importar`.
 
-También puede crearse como **Static Site** manualmente usando:
+Los adjuntos se registran por nombre y metadatos; el archivo original no se sube a un servidor en esta versión.
+
+## Publicación en GitHub y Render
+
+1. Subir el contenido completo de esta carpeta a la raíz de un repositorio de GitHub.
+2. En Render, crear un nuevo Blueprint y conectar ese repositorio.
+3. Render detectará `render.yaml` y publicará el tablero como sitio estático.
+
+También puede configurarse manualmente como Static Site:
 
 - Build command: `echo "Static site ready"`
 - Publish directory: `.`
 
-## Uso local
+## Archivo principal
 
-Se puede abrir `index.html` directamente en un navegador moderno. Para una experiencia idéntica a Render, conviene servir la carpeta con un servidor estático local.
-
-## Archivos
-
-- `index.html`: estructura de la aplicación.
-- `styles.css`: diseño y vistas responsive/impresión.
-- `app.js`: edición, curva emocional, guardado y exportaciones.
-- `render.yaml`: configuración automática para Render.
-- `assets/favicon.svg`: ícono del sitio.
+`index.html` contiene todo el tablero: estructura, diseño, lógica y logo. No requiere dependencias externas.
