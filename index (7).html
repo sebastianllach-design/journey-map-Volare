@@ -80,14 +80,18 @@
   .icon-btn:hover{background:rgba(255,255,255,.18)}
   tbody th{position:sticky;left:0;z-index:12;width:245px;min-width:245px;background:#fffaf1;padding:0;text-align:left}
   .row-label{padding:13px 14px 12px;border-left:6px solid var(--rowColor,#c89a4a);min-height:72px;position:relative}
-  .row-label strong{font-size:13px;color:var(--navy);display:block;padding-right:52px}
+  .row-label strong{font-size:13px;color:var(--navy);display:block;padding-right:94px}
   .row-label small{display:block;color:#898071;line-height:1.35;margin-top:4px;font-size:10.5px}
-  .row-drag-handle{position:absolute;right:27px;top:8px;width:22px;height:22px;padding:0;border:0;background:transparent;color:#9a8e7b;cursor:grab;font-size:16px;line-height:1;opacity:.42;display:grid;place-items:center}
-  .row-drag-handle:active{cursor:grabbing}
-  .row-delete{position:absolute;right:7px;top:8px;border:0;background:transparent;color:#aaa;cursor:pointer;font-size:13px;opacity:.25}
-  tr:hover .row-delete,tr:hover .row-drag-handle,.row-drag-handle:focus{opacity:1}
+  .row-tools{position:absolute;right:5px;top:6px;display:flex;align-items:center;gap:1px}
+  .row-drag-handle,.row-move-btn,.row-delete{position:static;width:21px;height:23px;padding:0;border:0;background:transparent;color:#9a8e7b;display:grid;place-items:center;line-height:1;opacity:.42}
+  .row-drag-handle{cursor:grab;font-size:17px;touch-action:none;user-select:none;-webkit-user-select:none}
+  .row-drag-handle:active,.is-row-dragging .row-drag-handle{cursor:grabbing}
+  .row-move-btn{cursor:pointer;font-size:13px}
+  .row-move-btn:disabled{opacity:.14!important;cursor:default}
+  .row-delete{cursor:pointer;font-size:13px;color:#aaa}
+  tr:hover .row-delete,tr:hover .row-drag-handle,tr:hover .row-move-btn,.row-drag-handle:focus,.row-move-btn:focus{opacity:1}
   tbody tr.row-dragging{opacity:.5}
-  tbody tr.row-drop-target .row-label{box-shadow:inset 0 3px 0 var(--gold)}
+  tbody tr.row-drop-target .row-label{box-shadow:inset 0 0 0 3px var(--gold);background:#fff4d9}
   td{width:240px;min-width:240px;background:#fff;padding:0}
   .cell{min-height:72px;padding:12px 13px;line-height:1.45;font-size:12.5px;outline:none;white-space:pre-wrap;transition:background .12s}
   .cell:focus{background:#fff9ec;box-shadow:inset 0 0 0 2px rgba(200,154,74,.35)}
@@ -126,10 +130,10 @@
   .field{display:grid;gap:6px;margin-bottom:12px}.field label{font-size:11px;font-weight:800;color:#766b5a;text-transform:uppercase;letter-spacing:.08em}.field input,.field textarea,.field select{border:1px solid #ddd1bd;border-radius:10px;padding:10px;outline:none}.field textarea{min-height:90px;resize:vertical}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.modal-actions .btn{color:var(--navy);border-color:#ddd1bd;background:#fff}.modal-actions .btn.gold{background:var(--gold);border-color:var(--gold)}
   .presentation .topbar,.presentation .hero,.presentation .footerbar,.presentation .board-meta .legend{display:none}
-  .presentation .board-shell{padding:0;max-width:none}.presentation .board-wrap{border-radius:0;max-height:100vh;border:0;box-shadow:none}.presentation table{min-width:100vw}.presentation .row-delete,.presentation .row-drag-handle,.presentation .stage-tools{display:none}
+  .presentation .board-shell{padding:0;max-width:none}.presentation .board-wrap{border-radius:0;max-height:100vh;border:0;box-shadow:none}.presentation table{min-width:100vw}.presentation .row-tools,.presentation .stage-tools{display:none}
   .presentation .cell{font-size:14px}.presentation .row-label strong{font-size:14px}
   @media(max-width:900px){.hero{grid-template-columns:1fr}.brand-copy{display:none}.brand{min-width:auto}.topbar-inner{padding:10px 12px}.toolbar{gap:5px}.btn{padding:8px 9px}.hero,.board-shell,.footerbar{padding-left:12px;padding-right:12px}.hero h2{font-size:26px}}
-  @media print{.topbar,.hero,.footerbar,.board-meta .legend{display:none!important}.board-shell{padding:0!important;max-width:none}.board-wrap{overflow:visible;max-height:none;border:0;box-shadow:none}.stage-tools,.row-delete,.row-drag-handle{display:none!important}table{transform-origin:top left;font-size:8px}body{background:white}}
+  @media print{.topbar,.hero,.footerbar,.board-meta .legend{display:none!important}.board-shell{padding:0!important;max-width:none}.board-wrap{overflow:visible;max-height:none;border:0;box-shadow:none}.stage-tools,.row-tools{display:none!important}table{transform-origin:top left;font-size:8px}body{background:white}}
 </style>
 </head>
 <body>
@@ -240,9 +244,9 @@ function render(){
  let html='<thead><tr><th class="corner"><div class="corner-inner"><div class="corner-title">Momento del huésped</div><div class="corner-sub">Cada columna representa una escena del recorrido. Arrastrá para reordenar.</div></div></th>';
  data.stages.forEach((s,i)=>{html+=`<th draggable="true" data-stage="${s.id}"><div class="stage-head"><div class="stage-kicker">Momento ${i+1}</div><div class="stage-title" contenteditable="true" data-stage-title="${s.id}">${esc(s.name)}</div><div class="stage-tools"><button class="icon-btn" title="Eliminar" data-delete-stage="${s.id}">×</button></div></div></th>`});
  html+='</tr></thead><tbody>';
- data.rows.forEach(r=>{
+ data.rows.forEach((r,rowIndex)=>{
    const scale=r.type==='emotion'?`<div class="emotion-labels"><span><i style="background:#325A93"></i>WOW</span><span><i style="background:#3A8D6D"></i>Satisfecho</span><span><i style="background:#D79A35"></i>Neutro</span><span><i style="background:#B85858"></i>Insatisfecho</span></div>`:'';
-   html+=`<tr data-row-target="${r.id}"><th><div class="row-label" style="--rowColor:${r.color}"><strong contenteditable="true" data-row-title="${r.id}">${esc(r.name)}</strong><small contenteditable="true" data-row-help="${r.id}">${esc(r.help||'')}</small>${scale}<button class="row-drag-handle" type="button" draggable="true" title="Arrastrar para reordenar fila" aria-label="Mover fila ${esc(r.name)}" data-drag-row="${r.id}">↕</button><button class="row-delete" title="Eliminar fila" data-delete-row="${r.id}">×</button></div></th>`;
+   html+=`<tr data-row-target="${r.id}"><th><div class="row-label" style="--rowColor:${r.color}"><strong contenteditable="true" data-row-title="${r.id}">${esc(r.name)}</strong><small contenteditable="true" data-row-help="${r.id}">${esc(r.help||'')}</small>${scale}<div class="row-tools"><span class="row-drag-handle" role="button" tabindex="0" title="Mantener y arrastrar para reordenar" aria-label="Arrastrar fila ${esc(r.name)}" data-drag-row="${r.id}">⠿</span><button class="row-move-btn" type="button" title="Subir fila" aria-label="Subir fila ${esc(r.name)}" data-move-row="${r.id}" data-row-direction="-1" ${rowIndex===0?'disabled':''}>↑</button><button class="row-move-btn" type="button" title="Bajar fila" aria-label="Bajar fila ${esc(r.name)}" data-move-row="${r.id}" data-row-direction="1" ${rowIndex===data.rows.length-1?'disabled':''}>↓</button><button class="row-delete" type="button" title="Eliminar fila" data-delete-row="${r.id}">×</button></div></div></th>`;
    data.stages.forEach(s=>{html+=`<td>${renderCell(r,s)}</td>`});
    html+='</tr>';
  });
@@ -268,11 +272,28 @@ function bindTable(){
  document.querySelectorAll('[data-proj]').forEach(el=>el.addEventListener('input',e=>{const sid=e.currentTarget.dataset.stage;data.projects[sid]=data.projects[sid]||{};data.projects[sid][e.currentTarget.dataset.proj]=e.currentTarget.value;saveData()}));
  document.querySelectorAll('[data-delete-stage]').forEach(b=>b.addEventListener('click',()=>deleteStage(b.dataset.deleteStage)));
  document.querySelectorAll('[data-delete-row]').forEach(b=>b.addEventListener('click',()=>deleteRow(b.dataset.deleteRow)));
+ document.querySelectorAll('[data-move-row]').forEach(b=>b.addEventListener('click',()=>moveRow(b.dataset.moveRow,Number(b.dataset.rowDirection))));
  document.querySelectorAll('thead th[data-stage]').forEach(th=>{th.addEventListener('dragstart',e=>{draggedStageId=th.dataset.stage;th.querySelector('.stage-head').classList.add('dragging');e.dataTransfer.effectAllowed='move'});th.addEventListener('dragend',()=>{th.querySelector('.stage-head').classList.remove('dragging');draggedStageId=null});th.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move'});th.addEventListener('drop',e=>{e.preventDefault();const target=th.dataset.stage;if(!draggedStageId||target===draggedStageId)return;const from=data.stages.findIndex(x=>x.id===draggedStageId),to=data.stages.findIndex(x=>x.id===target);const [item]=data.stages.splice(from,1);data.stages.splice(to,0,item);saveData();render()})});
- document.querySelectorAll('[data-drag-row]').forEach(handle=>{handle.addEventListener('dragstart',e=>{draggedRowId=handle.dataset.dragRow;handle.closest('tr')?.classList.add('row-dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedRowId)});handle.addEventListener('dragend',()=>{handle.closest('tr')?.classList.remove('row-dragging');document.querySelectorAll('[data-row-target]').forEach(row=>row.classList.remove('row-drop-target'));draggedRowId=null})});
- document.querySelectorAll('[data-row-target]').forEach(tr=>{tr.addEventListener('dragover',e=>{if(!draggedRowId)return;e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('[data-row-target]').forEach(row=>row.classList.remove('row-drop-target'));tr.classList.add('row-drop-target')});tr.addEventListener('dragleave',()=>tr.classList.remove('row-drop-target'));tr.addEventListener('drop',e=>{e.preventDefault();const target=tr.dataset.rowTarget;tr.classList.remove('row-drop-target');if(!draggedRowId||target===draggedRowId)return;const from=data.rows.findIndex(x=>x.id===draggedRowId),to=data.rows.findIndex(x=>x.id===target);if(from<0||to<0)return;const [item]=data.rows.splice(from,1);data.rows.splice(to,0,item);saveData();render()})});
+ document.querySelectorAll('[data-drag-row]').forEach(handle=>handle.addEventListener('pointerdown',e=>startRowDrag(e,handle)));
  document.querySelectorAll('[data-attach]').forEach(inp=>inp.addEventListener('change',async e=>{const key=e.currentTarget.dataset.attach;data.attachments[key]=data.attachments[key]||[];for(const file of e.currentTarget.files){data.attachments[key].push({name:file.name,size:file.size,type:file.type,lastModified:file.lastModified})}saveData();render()}));
  document.querySelectorAll('[data-remove-attachment]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.removeAttachment,i=+b.dataset.fileIndex;data.attachments[k].splice(i,1);saveData();render()}));
+}
+function moveRow(id,direction){const from=data.rows.findIndex(x=>x.id===id),to=from+direction;if(from<0||to<0||to>=data.rows.length)return;[data.rows[from],data.rows[to]]=[data.rows[to],data.rows[from]];saveData();render()}
+function reorderRow(sourceId,targetId){if(!sourceId||!targetId||sourceId===targetId)return;const from=data.rows.findIndex(x=>x.id===sourceId),to=data.rows.findIndex(x=>x.id===targetId);if(from<0||to<0)return;const [item]=data.rows.splice(from,1);data.rows.splice(to,0,item);saveData();render()}
+function startRowDrag(event,handle){
+ if(event.pointerType==='mouse'&&event.button!==0)return;
+ event.preventDefault();
+ draggedRowId=handle.dataset.dragRow;
+ let targetRowId=null;
+ const sourceRow=handle.closest('tr');
+ sourceRow?.classList.add('row-dragging');
+ document.body.classList.add('is-row-dragging');
+ const clearTargets=()=>document.querySelectorAll('[data-row-target]').forEach(row=>row.classList.remove('row-drop-target'));
+ const onMove=e=>{e.preventDefault();const hit=document.elementFromPoint(e.clientX,e.clientY);const target=hit?.closest?.('[data-row-target]');clearTargets();targetRowId=target&&target.dataset.rowTarget!==draggedRowId?target.dataset.rowTarget:null;if(targetRowId)target.classList.add('row-drop-target')};
+ const finish=()=>{document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',finish);document.removeEventListener('pointercancel',finish);sourceRow?.classList.remove('row-dragging');document.body.classList.remove('is-row-dragging');clearTargets();const sourceId=draggedRowId;draggedRowId=null;if(sourceId&&targetRowId)reorderRow(sourceId,targetRowId)};
+ document.addEventListener('pointermove',onMove,{passive:false});
+ document.addEventListener('pointerup',finish);
+ document.addEventListener('pointercancel',finish);
 }
 function deleteStage(id){if(data.stages.length<=1)return alert('Debe quedar al menos un momento.');if(!confirm('¿Eliminar este momento y todo su contenido?'))return;data.stages=data.stages.filter(x=>x.id!==id);Object.keys(data.cells).filter(k=>k.endsWith('_'+id)).forEach(k=>delete data.cells[k]);delete data.emotions[id];delete data.projects[id];Object.keys(data.attachments).filter(k=>k.endsWith('_'+id)).forEach(k=>delete data.attachments[k]);saveData();render()}
 function deleteRow(id){if(!confirm('¿Eliminar esta fila?'))return;data.rows=data.rows.filter(x=>x.id!==id);Object.keys(data.cells).filter(k=>k.startsWith(id+'_')).forEach(k=>delete data.cells[k]);saveData();render()}
